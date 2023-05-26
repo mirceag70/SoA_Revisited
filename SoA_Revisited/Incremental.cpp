@@ -1,7 +1,5 @@
 #include "Helper.h"
 
-constexpr unsigned STEP_SIZE = 65'000'000;
-
 //incremental
 tpPrime SoA_I(const tpPrime limit, uint8_t sv[], void*, void*)
 {
@@ -393,10 +391,10 @@ tpPrime SoA_I1(const tpPrime limit, uint8_t sv[], void*, void*)
 		for (; ; y += step, step = 6 - step)
 		{
 			tpPrime n = y * y;
-			if (n > limit) break;
+			if (n > stop) break;
 			FlipBit(n, sieve1);
 		}
-		const tpPrime xmax = (tpPrime)floor(sqrt(limit / 4));
+		const tpPrime xmax = (tpPrime)floor(sqrt(stop / 4));
 		for (tpPrime x = 3; x <= xmax; x += 3)
 		{
 			//get in position
@@ -654,8 +652,8 @@ tpPrime SoA_I2(const tpPrime limit, uint8_t sv[], void*, void*)
 		fn1(iter_min, limit);
 	};
 
-	//cTimer tmr;
-	//tmr.Start();
+	cTimer tmr;
+	tmr.Start();
 
 	//1 mod 12
 	auto Pattern11 = [&](const tpPrime start, const tpPrime stop)
@@ -860,7 +858,7 @@ tpPrime SoA_I2(const tpPrime limit, uint8_t sv[], void*, void*)
 	};
 	Sieve2(Pattern111, Pattern112);
 
-	//tmr.LapTime(true, "ptrn11");
+	tmr.LapTime(true, "ptrn11");
 
 	// secondary loop - remove multiple of squares
 	auto MarkSquares = [&](uint8_t work_sieve[], const unsigned rem)
@@ -897,7 +895,7 @@ tpPrime SoA_I2(const tpPrime limit, uint8_t sv[], void*, void*)
 	};
 	MarkSquares(sieve1, 1); MarkSquares(sieve5,  5);
 	MarkSquares(sieve7, 7); MarkSquares(sieve11, 11);
-	//tmr.LapTime(true, "squares");
+	tmr.LapTime(true, "squares");
 
 	// last loop - get primes
 	for (tpPrime k = 0; k < svlen; k++)
@@ -916,7 +914,7 @@ tpPrime SoA_I2(const tpPrime limit, uint8_t sv[], void*, void*)
 		CountPrimes(4); CountPrimes(5); CountPrimes(6); CountPrimes(7);
 	}
 
-	//tmr.LapTime(true, "counting");
-	//tmr.Stop(/*true, "squares & counting"*/);
+	tmr.LapTime(true, "counting");
+	tmr.Stop(/*true, "squares & counting"*/);
 	return numprimes;
 }

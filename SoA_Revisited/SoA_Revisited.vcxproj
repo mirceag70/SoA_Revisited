@@ -130,7 +130,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="357.cpp" />
+    <ClCompile Include="CPUdata.cpp" />
+    <ClCompile Include="Segmented.cpp" />
     <ClCompile Include="Incremental.cpp" />
+    <ClCompile Include="LightParallel.cpp" />
+    <ClCompile Include="Parallel.cpp" />
     <ClCompile Include="SimpleAtkin.cpp" />
     <ClCompile Include="SoA_Revisited.cpp" />
     <ClCompile Include="Touples.cpp" />

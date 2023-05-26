@@ -223,25 +223,21 @@ public:
 
 inline uint8_t idx_last_primes = 0;
 inline std::array<uint64_t, 256> last_primes;
-inline uint32_t maxgap, biggap;
-inline uint64_t lastprime;
 inline void AddPrime(uint64_t prime)
 { 
 #ifdef _DEBUG
 	static cChecker ckr;
 	assert(ckr.check_next_prime(prime));
 #endif // _DEBUG
-	
-	//if (prime == 2) maxgap = biggap = 0;
-	//else
-	//if ((prime - lastprime) > maxgap)
-	//{
-	//	maxgap = (uint32_t)(prime - lastprime);
-	//	if (maxgap > 0xFF) biggap++;
-	//}
-	//lastprime = prime;
 
 	last_primes[idx_last_primes++] = prime; 
+}
+
+inline thread_local uint8_t idx_last_primes_t = 0;
+inline thread_local std::array<uint64_t, 256> last_primes_t;
+inline void AddPrimeThreaded(uint64_t prime)
+{
+	last_primes_t[idx_last_primes_t++] = prime;
 }
 
 #ifndef ITERATIONS
@@ -249,7 +245,7 @@ inline void AddPrime(uint64_t prime)
 #endif 
 
 template<typename INTEGRAL1, typename INTEGRAL2, typename INTEGRAL3,
-		std::size_t size1, std::size_t size2 = 0, std::size_t size3 = 0>
+		std::size_t size1 = 0, std::size_t size2 = 0, std::size_t size3 = 0>
 void Try_Sieve(const uint64_t LIMIT, std::string message,
 	std::function<uint64_t(uint64_t, INTEGRAL1[], INTEGRAL2[], INTEGRAL3[])> Sieve, bool show_all = true)
 {
@@ -299,3 +295,240 @@ constexpr uint8_t BIT_RESET_MASK[] = { ~1, ~2, ~4, ~8, ~16, ~32, ~64, ~128 };
 
 inline uint64_t idx2no(uint64_t idx) { return 3 * idx + 5 - (idx & 1); };
 inline uint64_t no2idx(uint64_t no)  { return no / 3 - 1; };
+
+inline bool GetBit(tpPrime n, uint8_t sieve[])
+{
+	tpPrime q = (n / 12) / 8, r = (n / 12) % 8;
+	return (sieve[q] & BIT_MASK[r]);
+};
+inline void ResetBit(tpPrime n, uint8_t sieve[])
+{
+	tpPrime q = (n / 12) / 8, r = (n / 12) % 8;
+	sieve[q] &= BIT_RESET_MASK[r];
+};
+inline void FlipBit(tpPrime n, uint8_t sieve[])
+{
+	tpPrime q = (n / 12) / 8, r = (n / 12) % 8;
+	sieve[q] ^= BIT_MASK[r];
+};
+
+inline uint8_t* sieve1; inline uint8_t* sieve5; inline uint8_t* sieve7; inline uint8_t* sieve11;
+
+inline void Pattern11(const tpPrime start, const tpPrime stop, uint8_t sieve[])
+{
+	const tpPrime xmax = (tpPrime)floor(sqrt(stop / 4));
+	for (tpPrime x = 1, jmp = 0; x <= xmax; x += (1 + jmp), jmp = 1 - jmp)
+	{
+		//get in position
+		tpPrime y, n0 = 4 * x * x;
+		if (n0 < start)
+		{
+			const tpPrime yy = (tpPrime)ceil(sqrt(start - n0));
+			y = 6 * (yy / 6) + 3;
+			if (y < yy) y += 6;
+		}
+		else y = 3;
+		//sieve
+		for (; ; y += 6)
+		{
+			tpPrime n = n0 + (y * y);
+			if (n > stop) break;
+			FlipBit(n, sieve);
+		}
+	}
+};
+inline void Pattern12(const tpPrime start, const tpPrime stop, uint8_t sieve[])
+{
+	//for x = 0 we can not start with y = 1
+	uint8_t step = 2;
+	const tpPrime yy = (tpPrime)ceil(sqrt(start));
+	tpPrime y = 6 * (yy / 6) + 5;
+	if (y < yy)
+	{
+		y += 2;
+		if (y < yy) y += 4;
+		else step = 4;
+	}
+	for (; ; y += step, step = 6 - step)
+	{
+		tpPrime n = y * y;
+		if (n > stop) break;
+		FlipBit(n, sieve);
+	}
+	const tpPrime xmax = (tpPrime)floor(sqrt(stop / 4));
+	for (tpPrime x = 3; x <= xmax; x += 3)
+	{
+		//get in position
+		uint8_t step = 4;
+		tpPrime y, n0 = 4 * x * x;
+		if (n0 < start)
+		{
+			const tpPrime yy = (tpPrime)ceil(sqrt(start - n0));
+			y = 6 * (yy / 6) + 1;
+			if (y < yy)
+			{
+				y += 4;
+				if (y < yy) y += 2;
+				else step = 2;
+			}
+		}
+		else y = 1;
+		//sieve
+		for (; ; y += step, step = 6 - step)
+		{
+			tpPrime n = (4 * x * x) + (y * y);
+			if (n > stop) break;
+			FlipBit(n, sieve);
+		}
+	}
+};
+inline void Pattern5(const tpPrime start, const tpPrime stop, uint8_t sieve[])
+{
+	const tpPrime xmax = (tpPrime)floor(sqrt(stop / 4));
+	for (tpPrime x = 1, jmp = 0; x <= xmax; x += 1 + jmp, jmp = 1 - jmp)
+	{
+		//get in position
+		uint8_t step = 4;
+		tpPrime y, n0 = 4 * x * x;
+		if (n0 < start)
+		{
+			const tpPrime yy = (tpPrime)ceil(sqrt(start - n0));
+			y = 6 * (yy / 6) + 1;
+			if (y < yy)
+			{
+				y += 4;
+				if (y < yy) y += 2;
+				else step = 2;
+			}
+		}
+		else y = 1;
+		//sieve
+		for (; ; y += step, step = 6 - step)
+		{
+			tpPrime n = n0 + (y * y);
+			if (n > stop) break;
+			FlipBit(n, sieve);
+		}
+	}
+};
+inline void Pattern7(const tpPrime start, const tpPrime stop, uint8_t sieve[])
+{
+	const tpPrime xmax = (tpPrime)floor(sqrt(stop / 3));
+	for (tpPrime x = 1; x <= xmax; x += 2)
+	{
+		//get in position
+		uint8_t step = 2;
+		tpPrime y, n0 = 3 * x * x;
+		if (n0 < start)
+		{
+			const tpPrime yy = (tpPrime)ceil(sqrt(start - n0));
+			y = 6 * (yy / 6) + 2;
+			if (y < yy)
+			{
+				y += 2;
+				if (y < yy) y += 4;
+				else step = 4;
+			}
+		}
+		else y = 2;
+		//sieve			
+		for (; ; y += step, step = 6 - step)
+		{
+			tpPrime n = n0 + (y * y);
+			if (n > stop) break;
+			FlipBit(n, sieve);
+		}
+	}
+};
+inline void Pattern111(const tpPrime start, const tpPrime stop, uint8_t sieve[])
+{
+	const tpPrime xmax = (tpPrime)floor(sqrt(stop / 2));
+	tpPrime x = (tpPrime)ceil(sqrt(start / 3));
+	if (x & 1) x++;
+	for (; x <= xmax; x += 2)
+	{
+		//get in position
+		uint8_t step = 4;
+		tpPrime y, n0 = 3 * x * x;
+		if (n0 > stop)
+		{
+			const tpPrime yy = (tpPrime)ceil(sqrt(n0 - stop));
+			y = 6 * (yy / 6) + 1;
+			if (y < yy)
+			{
+				y += 4;
+				if (y < yy) y += 2;
+				else step = 2;
+			}
+		}
+		else y = 1;
+		//sieve			
+		for (; x > y; y += step, step = 6 - step)
+		{
+			tpPrime n = n0 - (y * y);
+			if (n < start) break;
+			FlipBit(n, sieve);
+		}
+	}
+};
+inline void Pattern112(const tpPrime start, const tpPrime stop, uint8_t sieve[])
+{
+	const tpPrime xmax = (tpPrime)floor(sqrt(stop / 2));
+	tpPrime x = (tpPrime)ceil(sqrt(start / 3));
+	if (not (x & 1)) x++;
+	for (; x <= xmax; x += 2)
+	{
+		//get in position
+		uint8_t step = 2;
+		tpPrime y, n0 = 3 * x * x;
+		if (n0 > stop)
+		{
+			const tpPrime yy = (tpPrime)ceil(sqrt(n0 - stop));
+			y = 6 * (yy / 6) + 2;
+			if (y < yy)
+			{
+				y += 2;
+				if (y < yy) y += 4;
+				else step = 4;
+			}
+		}
+		else y = 2;
+		//sieve			
+		for (; x > y; y += step, step = 6 - step)
+		{
+			tpPrime n = n0 - (y * y);
+			if (n < start) break;
+			FlipBit(n, sieve);
+		}
+	}
+};
+
+constexpr unsigned ROOT_LIMIT = 10'000'000u;
+constexpr unsigned NO_ROOT_PRIMES = 664'577u;
+
+constexpr unsigned STEP_SIZE = 65'000'000;
+
+template<typename FN1, typename FN2>
+void Sieve2Patterns(FN1 fn1, FN2 fn2, const tpPrime start, const tpPrime stop, uint8_t sieve[])
+{
+	tpPrime iter_min = start;
+	if ((stop - start) > STEP_SIZE)
+		for (; iter_min < (stop - STEP_SIZE); iter_min += STEP_SIZE)
+		{
+			fn1(iter_min, iter_min + STEP_SIZE, sieve);
+			fn2(iter_min, iter_min + STEP_SIZE, sieve);
+		}
+	fn1(iter_min, stop, sieve); fn2(iter_min, stop, sieve);
+};
+
+template<typename FN>
+void Sieve1Pattern(FN fn1, const tpPrime start, const tpPrime stop, uint8_t sieve[])
+{
+	tpPrime iter_min = start;
+	if ((stop - start) > STEP_SIZE)
+		for (; iter_min < (stop - STEP_SIZE); iter_min += STEP_SIZE)
+		{
+			fn1(iter_min, iter_min + STEP_SIZE, sieve);
+		}
+	fn1(iter_min, stop, sieve);
+};

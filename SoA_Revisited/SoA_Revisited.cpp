@@ -1,4 +1,4 @@
-#define ITERATIONS	1
+#define ITERATIONS	5
 
 #include "Helper.h"
 
@@ -18,9 +18,16 @@ tpPrime SoA_T4(const tpPrime limit, uint8_t sieve[], void*, void*);
 tpPrime SoA_I(const tpPrime limit, uint8_t sieve[], void*, void*);
 tpPrime SoA_I1(const tpPrime limit, uint8_t sieve[], void*, void*);
 tpPrime SoA_I2(const tpPrime limit, uint8_t sieve[], void*, void*);
+tpPrime SoA_I3(const tpPrime limit, uint8_t sieve[], void*, void*);
+
+tpPrime SoA_LP(const tpPrime limit, uint8_t sieve[], void*, void*);
+tpPrime SoA_P(const tpPrime limit, uint8_t sieve[], void*, void*);
+tpPrime SoA_FP(const tpPrime limit, uint8_t sieve[], void*, void*);
+
+tpPrime SoA_S(const tpPrime limit, void*, void*, void*);
 
 //constexpr tpPrime LIMIT = 1'000'000'00;
-constexpr tpPrime LIMIT = 10'000'000'000;
+constexpr tpPrime LIMIT = 100'000'000'000'000;
 
 int main()
 {
@@ -51,7 +58,17 @@ int main()
     //    (LIMIT, "SoA incremental", &SoA_I, false);
     //Try_Sieve<uint8_t, int, int, 4 * (LIMIT / 96 + 2)>
     //    (LIMIT, "SoA incr. - tink", &SoA_I1, false);
-    Try_Sieve<uint8_t, int, int, 4 * (LIMIT / 96 + 2)>
-        (LIMIT, "SoA incr. - tink2", &SoA_I2, false);
+    //Try_Sieve<uint8_t, int, int, 4 * (LIMIT / 96 + 2)>
+    //    (LIMIT, "SoA incr. - tink2", &SoA_I2, false);
+    //Try_Sieve<uint8_t, int, int, 4 * (LIMIT / 96 + 2)>
+    //    (LIMIT, "SoA incr. - tink3", &SoA_I3, false);
+    //Try_Sieve<uint8_t, int, int, 4 * (LIMIT / 96 + 2)>
+    //    (LIMIT, "SoA light parallel", &SoA_LP, false);
+    //Try_Sieve<uint8_t, int, int, 4 * (LIMIT / 96 + 2)>
+    //    (LIMIT, "SoA parallel", &SoA_P, false);
+    //Try_Sieve<uint8_t, int, int, 4 * (LIMIT / 96 + 2)>
+    //    (LIMIT, "SoA full parallel", &SoA_FP, false);
+    Try_Sieve<int, int, int>
+        (LIMIT, "SoA segmented", &SoA_S, false);
 }
 
