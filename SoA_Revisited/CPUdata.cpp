@@ -1,13 +1,10 @@
-#undef byte
-
 #define _WIN32_DCOM
 #include <iostream>
-using namespace std;
 #include <comdef.h>
 #include <Wbemidl.h>
 
 #pragma comment(lib, "wbemuuid.lib")
-/*
+
 //This code uses the WMI API to connect to the root\WMI namespace and execute a query to retrieve the CurrentTemperature property from the MSAcpi_ThermalZoneTemperature class.
 HRESULT GetCpuTemperature(LPLONG pTemperature)
 {
@@ -76,6 +73,7 @@ double GetCPUTemp(void)
     tempCelsius = temp / 10 - 273.15;
     return tempCelsius;
 }
+
 
 #include <windows.h>
 #include <vector>
@@ -169,4 +167,3 @@ void CPUtilizatoin()
     }
 }
 
-*/

@@ -42,5 +42,8 @@
     <ClCompile Include="CPUdata.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="fastsqrt.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

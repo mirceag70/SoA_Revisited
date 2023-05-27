@@ -1,4 +1,4 @@
-#define ITERATIONS	5
+#define ITERATIONS	1
 
 #include "Helper.h"
 
@@ -26,14 +26,20 @@ tpPrime SoA_FP(const tpPrime limit, uint8_t sieve[], void*, void*);
 
 tpPrime SoA_S(const tpPrime limit, void*, void*, void*);
 
+void SoA_Interval(void);
+
 //constexpr tpPrime LIMIT = 1'000'000'00;
-constexpr tpPrime LIMIT = 100'000'000'000'000;
+constexpr tpPrime LIMIT = 10'00'00'000'000;
+
+unsigned long long test(void);
 
 int main()
 {
     std::locale mylocale("");   // get global locale 
     std::cout.imbue(mylocale);  // imbue global locale for thousands delimiter
 
+    //test(); return 0;
+    
     //Try357(LIMIT);
 
     //Try_Sieve<bool, int, int, LIMIT + 1>
@@ -68,7 +74,9 @@ int main()
     //    (LIMIT, "SoA parallel", &SoA_P, false);
     //Try_Sieve<uint8_t, int, int, 4 * (LIMIT / 96 + 2)>
     //    (LIMIT, "SoA full parallel", &SoA_FP, false);
-    Try_Sieve<int, int, int>
-        (LIMIT, "SoA segmented", &SoA_S, false);
+    //Try_Sieve<int, int, int>
+    //    (LIMIT, "SoA segmented", &SoA_S, false);
+
+    SoA_Interval();
 }
 

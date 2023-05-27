@@ -131,6 +131,7 @@
   <ItemGroup>
     <ClCompile Include="357.cpp" />
     <ClCompile Include="CPUdata.cpp" />
+    <ClCompile Include="fastsqrt.cpp" />
     <ClCompile Include="Segmented.cpp" />
     <ClCompile Include="Incremental.cpp" />
     <ClCompile Include="LightParallel.cpp" />
