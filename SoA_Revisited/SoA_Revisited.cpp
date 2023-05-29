@@ -1,4 +1,4 @@
-#define ITERATIONS	1
+#define ITERATIONS	5
 
 #include "Helper.h"
 
@@ -29,7 +29,7 @@ tpPrime SoA_S(const tpPrime limit, void*, void*, void*);
 void SoA_Interval(void);
 
 //constexpr tpPrime LIMIT = 1'000'000'00;
-constexpr tpPrime LIMIT = 10'00'00'000'000;
+constexpr tpPrime LIMIT = 100'000'000'000'000;
 
 unsigned long long test(void);
 
@@ -74,9 +74,9 @@ int main()
     //    (LIMIT, "SoA parallel", &SoA_P, false);
     //Try_Sieve<uint8_t, int, int, 4 * (LIMIT / 96 + 2)>
     //    (LIMIT, "SoA full parallel", &SoA_FP, false);
-    //Try_Sieve<int, int, int>
-    //    (LIMIT, "SoA segmented", &SoA_S, false);
+    Try_Sieve<int, int, int>
+        (LIMIT, "SoA segmented", &SoA_S, false);
 
-    SoA_Interval();
+    //SoA_Interval();
 }
 

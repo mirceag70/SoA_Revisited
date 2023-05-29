@@ -1,4 +1,4 @@
-#include "Helper.h"
+ #include "Helper.h"
 
 constexpr tpPrime SEGMENT_SIZE = 10'000'000'000ull;
 constexpr tpPrime SVLEN = 2 + SEGMENT_SIZE/96;
@@ -8,7 +8,38 @@ tpPrime segment_start = 0;
 
 //sievers
 
-#define COUNTERS
+#undef STEP_SIZE
+
+constexpr unsigned STEP_SIZE_INIT = 65'000'000;
+constexpr unsigned STEP_SIZE_14 = 180'000'000;
+unsigned step_size = STEP_SIZE_INIT;
+
+template<typename FN1, typename FN2>
+void Sieve2PatternsS(FN1 fn1, FN2 fn2, const tpPrime start, const tpPrime stop, uint8_t sieve[])
+{
+	tpPrime iter_min = start;
+	if ((stop - start) > step_size)
+		for (; iter_min < (stop - step_size); iter_min += step_size)
+		{
+			fn1(iter_min, iter_min + step_size, sieve);
+			fn2(iter_min, iter_min + step_size, sieve);
+		}
+	fn1(iter_min, stop, sieve); fn2(iter_min, stop, sieve);
+};
+
+template<typename FN>
+void Sieve1PatternS(FN fn1, const tpPrime start, const tpPrime stop, uint8_t sieve[])
+{
+	tpPrime iter_min = start;
+	if ((stop - start) > step_size)
+		for (; iter_min < (stop - step_size); iter_min += step_size)
+		{
+			fn1(iter_min, iter_min + step_size, sieve);
+		}
+	fn1(iter_min, stop, sieve);
+};
+
+//#define COUNTERS
 #ifdef COUNTERS 
 tpPrime flips = 0, positionings = 0;
 #endif
@@ -17,43 +48,81 @@ void Pattern11S(const tpPrime start, const tpPrime stop, uint8_t sieve[])
 {
 	const tpPrime nmax = stop - segment_start;
 	const tpPrime xmax = (tpPrime)(sqrt(stop / 4));
+	const tpPrime yy = (tpPrime)ceil(sqrt(start - 4));
+	tpPrime ystart = 6 * (yy / 6) + 3; 	
+	if (ystart < yy) 
+		ystart += 6;
 	for (tpPrime x = 1, jmp = 0; x <= xmax; x += (1 + jmp), jmp = 1 - jmp)
 	{
-		//get in position
 		tpPrime y, n0 = 4 * x * x;
 		if (n0 < start)
-		{
-			const tpPrime yy = (tpPrime)ceil(sqrt(start - n0));
-			y = 6 * (yy / 6) + 3;
-			if (y < yy) y += 6;
+		{	//get in position
+			tpPrime y6 = ystart;
+			for (; (y6 * y6) >= (start - n0); y6 -= 6); 
+			y = ystart = y6 + 6;
+			//const tpPrime yy = (tpPrime)ceil(sqrt(start - n0));
+			//y = 6 * (yy / 6) + 3;
+			//if (y < yy) y += 6;
+#ifdef COUNTERS 
+			positionings++;
+#endif
 		}
 		else y = 3;
-#ifdef COUNTERS 
-		positionings++;
-#endif
 		//sieve
 		for (tpPrime n = n0 + (y * y) - segment_start; n <= nmax; n += 12 * y + 36, y += 6)
 		{
 			assert(n >= start - segment_start);
-			FlipBit(n, sieve); 
-#ifdef COUNTERS 
-			flips++; 
-#endif
-		}		
-		//tpPrime n = n0 + (y * y);
-		//assert(n >= start);
-		//n -= segment_start;
-		//for (y = 0; n < nmax; n += 12 * y + 36, y += 6)
+			FlipBit(n, sieve);
+		}
+		//for (tpPrime n = n0 + (y * y) - segment_start; n <= nmax; n += 12 * y + 36, y += 6)
 		//{
 		//	assert(n >= start - segment_start);
 		//	FlipBit(n, sieve);
 		//}
 	}
-}; 
+};
+//void Pattern11Sx(const tpPrime start, const tpPrime stop, uint8_t sieve[])
+//{
+//	const tpPrime nmax = stop - segment_start;
+//	const tpPrime xmax = (tpPrime)(sqrt(stop / 4));
+//	for (tpPrime x = 1, jmp = 0; x <= xmax; x += (1 + jmp), jmp = 1 - jmp)
+//	{
+//		//get in position
+//		tpPrime y, n0 = 4 * x * x;
+//		if (n0 < start)
+//		{
+//			const tpPrime yy = (tpPrime)ceil(sqrt(start - n0));
+//			y = 6 * (yy / 6) + 3;
+//			if (y < yy) y += 6;
+//#ifdef COUNTERS 
+//			positionings++;
+//#endif
+//		}
+//		else y = 3;
+//		//sieve
+//		for (tpPrime n = n0 + (y * y) - segment_start; n <= nmax; n += 12 * y + 36, y += 6)
+//		{
+//			assert(n >= start - segment_start);
+//			FlipBit(n, sieve); 
+//#ifdef COUNTERS 
+//			flips++; 
+//#endif
+//		}		
+//		//tpPrime n = n0 + (y * y);
+//		//assert(n >= start);
+//		//n -= segment_start;
+//		//for (y = 0; n < nmax; n += 12 * y + 36, y += 6)
+//		//{
+//		//	assert(n >= start - segment_start);
+//		//	FlipBit(n, sieve);
+//		//}
+//	}
+//}; 
 void Pattern12S(const tpPrime start, const tpPrime stop, uint8_t sieve[])
 {
 	const tpPrime nmax = stop - segment_start;
 	const tpPrime xmax = (tpPrime)(sqrt(stop / 4));
+	tpPrime ystart; uint8_t stepstart;
 	{//for x = 0 we can not start with y = 1
 		uint8_t step = 2;
 		const tpPrime yy = (tpPrime)ceil(sqrt(start));
@@ -64,6 +133,7 @@ void Pattern12S(const tpPrime start, const tpPrime stop, uint8_t sieve[])
 			if (y < yy) y += 4;
 			else step = 4;
 		}
+		ystart = y; stepstart = step;
 #ifdef COUNTERS 
 		positionings++;
 #endif
@@ -90,19 +160,23 @@ void Pattern12S(const tpPrime start, const tpPrime stop, uint8_t sieve[])
 		tpPrime y, n0 = 4 * x * x;
 		if (n0 < start)
 		{
-			const tpPrime yy = (tpPrime)ceil(sqrt(start - n0));
-			y = 6 * (yy / 6) + 1;
-			if (y < yy)
-			{
-				y += 4;
-				if (y < yy) y += 2;
-				else step = 2;
-			}
+			tpPrime y6 = ystart;
+			for (; (y6 * y6) >= (start - n0); stepstart = 6 - stepstart, y6 -= stepstart);
+			y = ystart = y6 + stepstart; step = stepstart = 6 - stepstart;
+			//const tpPrime yy = (tpPrime)ceil(sqrt(start - n0));
+			//y = 6 * (yy / 6) + 1;
+			//if (y < yy)
+			//{
+			//	y += 4;
+			//	if (y < yy) y += 2;
+			//	else step = 2;
+			//}
+			//assert((y == ystart) and (step == stepstart));
+#ifdef COUNTERS 
+			positionings++;
+#endif
 		}
 		else y = 1;
-#ifdef COUNTERS 
-		positionings++;
-#endif
 		//sieve
 		for (tpPrime n = n0 + (y * y) - segment_start; n <= nmax; n += step * (2 * y + step), y += step, step = 6 - step)
 		{
@@ -126,7 +200,7 @@ void SieveQuadraticsChunk1S(const tpPrime sstart, const tpPrime sstop, const uns
 	tpPrime chunksz = (sstop - sstart) / nt;
 	tpPrime start = sstart + i * chunksz;
 	tpPrime stop = (i == (nt - 1)) ? sstop : start + chunksz;
-	Sieve2Patterns(Pattern11S, Pattern12S, start, stop, sieve1);
+	Sieve2PatternsS(Pattern11S, Pattern12S, start, stop, sieve1);
 	//tmr.Stop(true, "1");
 }
 
@@ -134,6 +208,15 @@ void Pattern5S(const tpPrime start, const tpPrime stop, uint8_t sieve[])
 {
 	const tpPrime nmax = stop - segment_start;
 	const tpPrime xmax = (tpPrime)(sqrt(stop / 4));
+	const tpPrime yy = (tpPrime)ceil(sqrt(start - 4));
+	tpPrime ystart = 6 * (yy / 6) + 1; 	
+	uint8_t stepstart = 4;
+	if (ystart < yy)
+	{
+		ystart += 4;
+		if (ystart < yy) ystart += 2;
+		else stepstart = 2;
+	}
 	for (tpPrime x = 1, jmp = 0; x <= xmax; x += 1 + jmp, jmp = 1 - jmp)
 	{
 		//get in position
@@ -141,19 +224,23 @@ void Pattern5S(const tpPrime start, const tpPrime stop, uint8_t sieve[])
 		tpPrime y, n0 = 4 * x * x;
 		if (n0 < start)
 		{
-			const tpPrime yy = (tpPrime)ceil(sqrt(start - n0));
-			y = 6 * (yy / 6) + 1;
-			if (y < yy)
-			{
-				y += 4;
-				if (y < yy) y += 2;
-				else step = 2;
-			}
+			tpPrime y6 = ystart;
+			for (; (y6 * y6) >= (start - n0); stepstart = 6 - stepstart, y6 -= stepstart);
+			y = ystart = y6 + stepstart; step = stepstart = 6 - stepstart;
+			//const tpPrime yy = (tpPrime)ceil(sqrt(start - n0));
+			//y = 6 * (yy / 6) + 1;
+			//if (y < yy)
+			//{
+			//	y += 4;
+			//	if (y < yy) y += 2;
+			//	else step = 2;
+			//}
+			//assert((y == ystart) and (step == stepstart));
+#ifdef COUNTERS 
+			positionings++;
+#endif
 		}
 		else y = 1;
-#ifdef COUNTERS 
-		positionings++;
-#endif
 		//sieve
 		for (tpPrime n = n0 + (y * y) - segment_start; n <= nmax; n += step * (2 * y + step), y += step, step = 6 - step)
 		{
@@ -172,13 +259,55 @@ void Pattern5S(const tpPrime start, const tpPrime stop, uint8_t sieve[])
 		//}
 	}
 };
+//void Pattern5Sx(const tpPrime start, const tpPrime stop, uint8_t sieve[])
+//{
+//	const tpPrime nmax = stop - segment_start;
+//	const tpPrime xmax = (tpPrime)(sqrt(stop / 4));
+//	for (tpPrime x = 1, jmp = 0; x <= xmax; x += 1 + jmp, jmp = 1 - jmp)
+//	{
+//		//get in position
+//		uint8_t step = 4;
+//		tpPrime y, n0 = 4 * x * x;
+//		if (n0 < start)
+//		{
+//			const tpPrime yy = (tpPrime)ceil(sqrt(start - n0));
+//			y = 6 * (yy / 6) + 1;
+//			if (y < yy)
+//			{
+//				y += 4;
+//				if (y < yy) y += 2;
+//				else step = 2;
+//			}
+//#ifdef COUNTERS 
+//			positionings++;
+//#endif
+//		}
+//		else y = 1;
+//		//sieve
+//		for (tpPrime n = n0 + (y * y) - segment_start; n <= nmax; n += step * (2 * y + step), y += step, step = 6 - step)
+//		{
+//			assert(n >= start - segment_start);
+//			FlipBit(n, sieve);
+//#ifdef COUNTERS 
+//			flips++;
+//#endif
+//		}
+//		//for (; ; y += step, step = 6 - step)
+//		//{
+//		//	tpPrime n = n0 + (y * y);
+//		//	if (n > stop) break;
+//		//	assert(n >= segment_start);
+//		//	FlipBit(n - segment_start, sieve);
+//		//}
+//	}
+//};
 void SieveQuadraticsChunk5S(const tpPrime sstart, const tpPrime sstop, const unsigned nt, const unsigned i)
 {
 	//cTimer tmr;	tmr.Start();
 	tpPrime chunksz = (sstop - sstart) / nt;
 	tpPrime start = sstart + i * chunksz;
 	tpPrime stop = (i == (nt - 1)) ? sstop : start + chunksz;
-	Sieve1Pattern(Pattern5S, start, stop, sieve5);
+	Sieve1PatternS(Pattern5S, start, stop, sieve5);
 	//tmr.Stop(true, "5");
 }
 
@@ -186,6 +315,15 @@ void Pattern7S(const tpPrime start, const tpPrime stop, uint8_t sieve[])
 {
 	const tpPrime nmax = stop - segment_start;
 	const tpPrime xmax = (tpPrime)(sqrt(stop / 3));
+	const tpPrime yy = (tpPrime)ceil(sqrt(start - 4));
+	tpPrime ystart = 6 * (yy / 6) + 2;
+	uint8_t stepstart = 2;
+	if (ystart < yy)
+	{
+		ystart += 2;
+		if (ystart < yy) ystart += 4;
+		else stepstart = 4;
+	}
 	for (tpPrime x = 1; x <= xmax; x += 2)
 	{
 		//get in position
@@ -193,19 +331,23 @@ void Pattern7S(const tpPrime start, const tpPrime stop, uint8_t sieve[])
 		tpPrime y, n0 = 3 * x * x;
 		if (n0 < start)
 		{
-			const tpPrime yy = (tpPrime)ceil(sqrt(start - n0));
-			y = 6 * (yy / 6) + 2;
-			if (y < yy)
-			{
-				y += 2;
-				if (y < yy) y += 4;
-				else step = 4;
-			}
+			tpPrime y6 = ystart;
+			for (; (y6 * y6) >= (start - n0); stepstart = 6 - stepstart, y6 -= stepstart);
+			y = ystart = y6 + stepstart; step = stepstart = 6 - stepstart;
+			//const tpPrime yy = (tpPrime)ceil(sqrt(start - n0));
+			//y = 6 * (yy / 6) + 2;
+			//if (y < yy)
+			//{
+			//	y += 2;
+			//	if (y < yy) y += 4;
+			//	else step = 4;
+			//}
+			//assert((y == ystart) and (step == stepstart));
+#ifdef COUNTERS 
+			positionings++;
+#endif
 		}
 		else y = 2;
-#ifdef COUNTERS 
-		positionings++;
-#endif
 		//sieve			
 		for (tpPrime n = n0 + (y * y) - segment_start; n <= nmax; n += step * (2 * y + step), y += step, step = 6 - step)
 		{
@@ -230,7 +372,7 @@ void SieveQuadraticsChunk7S(const tpPrime sstart, const tpPrime sstop, const uns
 	tpPrime chunksz = (sstop - sstart) / nt;
 	tpPrime start = sstart + i * chunksz;
 	tpPrime stop = (i == (nt - 1)) ? sstop : start + chunksz;
-	Sieve1Pattern(Pattern7S, start, stop, sieve7);
+	Sieve1PatternS(Pattern7S, start, stop, sieve7);
 	//tmr.Stop(true, "7");
 }
 
@@ -238,8 +380,9 @@ void Pattern111S(const tpPrime start, const tpPrime stop, uint8_t sieve[])
 {
 	const tpPrime nmin = start - segment_start;
 	const tpPrime xmax = (tpPrime)(sqrt(stop / 2));
-	tpPrime x = (tpPrime)(sqrt(start / 3));
+	tpPrime ystart =0, x = (tpPrime)(sqrt(start / 3));
 	if (x & 1) x++;
+	uint8_t stepstart = 0;
 	for (; x <= xmax; x += 2)
 	{
 		//get in position
@@ -247,19 +390,38 @@ void Pattern111S(const tpPrime start, const tpPrime stop, uint8_t sieve[])
 		tpPrime y, n0 = 3 * x * x;
 		if (n0 > stop)
 		{
-			const tpPrime yy = (tpPrime)ceil(sqrt(n0 - stop));
-			y = 6 * (yy / 6) + 1;
-			if (y < yy)
+			if (stepstart)
 			{
-				y += 4;
-				if (y < yy) y += 2;
-				else step = 2;
+				tpPrime y6 = ystart;
+				for (; (y6 * y6) < (n0 - stop); y6 += stepstart, stepstart = 6 - stepstart);
+				y = ystart = y6; step = stepstart;
+				//const tpPrime yy = (tpPrime)ceil(sqrt(n0 - stop));
+				//y = 6 * (yy / 6) + 1;
+				//if (y < yy)
+				//{
+				//	y += 4;
+				//	if (y < yy) y += 2;
+				//	else step = 2;
+				//}
+				//assert((y == ystart) and (step == stepstart));
 			}
+			else
+			{
+				const tpPrime yy = (tpPrime)ceil(sqrt(n0 - stop));
+				y = 6 * (yy / 6) + 1;
+				if (y < yy)
+				{
+					y += 4;
+					if (y < yy) y += 2;
+					else step = 2;
+				}
+				ystart = y; stepstart = step;
+			}
+#ifdef COUNTERS 
+			positionings++;
+#endif
 		}
 		else y = 1;
-#ifdef COUNTERS 
-		positionings++;
-#endif
 		//sieve			
 		n0 -= y * y;
 		if(n0 >= start)
@@ -286,8 +448,9 @@ void Pattern112S(const tpPrime start, const tpPrime stop, uint8_t sieve[])
 {
 	const tpPrime nmin = start - segment_start;
 	const tpPrime xmax = (tpPrime)(sqrt(stop / 2));
-	tpPrime x = (tpPrime)(sqrt(start / 3));
+	tpPrime ystart, x = (tpPrime)(sqrt(start / 3));
 	if (not (x & 1)) x++;
+	uint8_t stepstart = 0;
 	for (; x <= xmax; x += 2)
 	{
 		//get in position
@@ -295,19 +458,29 @@ void Pattern112S(const tpPrime start, const tpPrime stop, uint8_t sieve[])
 		tpPrime y, n0 = 3 * x * x;
 		if (n0 > stop)
 		{
-			const tpPrime yy = (tpPrime)ceil(sqrt(n0 - stop));
-			y = 6 * (yy / 6) + 2;
-			if (y < yy)
+			if (stepstart)
 			{
-				y += 2;
-				if (y < yy) y += 4;
-				else step = 4;
+				tpPrime y6 = ystart;
+				for (; (y6 * y6) < (n0 - stop); y6 += stepstart, stepstart = 6 - stepstart);
+				y = ystart = y6; step = stepstart;
 			}
+			else
+			{
+				const tpPrime yy = (tpPrime)ceil(sqrt(n0 - stop));
+				y = 6 * (yy / 6) + 2;
+				if (y < yy)
+				{
+					y += 2;
+					if (y < yy) y += 4;
+					else step = 4;
+				}
+				ystart = y; stepstart = step;
+		}
+#ifdef COUNTERS 
+			positionings++;
+#endif
 		}
 		else y = 2;
-#ifdef COUNTERS 
-		positionings++;
-#endif
 		//sieve			
 		n0 -= y * y;
 		if (n0 >= start)
@@ -338,7 +511,7 @@ void SieveQuadraticsChunk11S(const tpPrime sstart, const tpPrime sstop, const un
 	tpPrime chunksz = (sstop - sstart) / nt;
 	tpPrime start = sstart + i * chunksz;
 	tpPrime stop = (i == (nt - 1)) ? sstop : start + chunksz;
-	Sieve2Patterns(Pattern111S, Pattern112S, start, stop, sieve11);
+	Sieve2PatternsS(Pattern111S, Pattern112S, start, stop, sieve11);
 	//tmr.Stop(true, "11");
 }
 
@@ -502,9 +675,12 @@ tpPrime SegmentCount(const tpPrime start, const tpPrime stop)
 //segmented
 tpPrime SoA_SieveSegment(const tpPrime start, const tpPrime stop)
 {
+	double x = stop; 
+	step_size = STEP_SIZE_INIT + x*(STEP_SIZE_14 - STEP_SIZE_INIT)/1e14;
+
 	//cTimer tmr;
 	//tmr.Start();
-	nln(); 	
+	
 #ifdef COUNTERS
 	flips = positionings = 0;
 #endif
@@ -525,7 +701,7 @@ tpPrime SoA_SieveSegment(const tpPrime start, const tpPrime stop)
 	numprimes = SegmentCount(start, stop);
 
 #ifdef COUNTERS
-	std::cout << flips << " | " << positionings;
+	nln(); std::cout << flips << " | " << positionings;
 #endif
 	//for (tpPrime k = 0; k < SVLEN; k++)
 	//{
@@ -571,7 +747,7 @@ tpPrime SoA_S(const tpPrime limit, void*, void*, void*)
 
 constexpr tpPrime interval_base = 100'000'000'000'000ull; //1e14
 //constexpr tpPrime interval_len = 1'000'000'000'000; //1e12
-constexpr tpPrime interval_len = 500'000'000'00ull; //1e9
+constexpr tpPrime interval_len = 20'000'000'000ull; 
 constexpr tpPrime interval_start = (interval_base - interval_len);
 constexpr tpPrime interval_end = interval_base;
 
