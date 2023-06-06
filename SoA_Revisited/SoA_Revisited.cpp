@@ -74,9 +74,9 @@ int main()
     //    (LIMIT, "SoA parallel", &SoA_P, false);
     //Try_Sieve<uint8_t, int, int, 4 * (LIMIT / 96 + 2)>
     //    (LIMIT, "SoA full parallel", &SoA_FP, false);
-    Try_Sieve<int, int, int>
-        (LIMIT, "SoA segmented", &SoA_S, false);
+    //Try_Sieve<int, int, int>
+    //    (LIMIT, "SoA segmented", &SoA_S, false);
 
-    //SoA_Interval();
+    SoA_Interval();
 }
 

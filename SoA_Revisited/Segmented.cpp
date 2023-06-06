@@ -745,9 +745,9 @@ tpPrime SoA_S(const tpPrime limit, void*, void*, void*)
 	return numprimes;
 }
 
-constexpr tpPrime interval_base = 100'000'000'000'000ull; //1e14
+constexpr tpPrime interval_base = 100'000'000'00'0ull; //1e14
 //constexpr tpPrime interval_len = 1'000'000'000'000; //1e12
-constexpr tpPrime interval_len = 20'000'000'000ull; 
+constexpr tpPrime interval_len = 50'000'000'000ull; 
 constexpr tpPrime interval_start = (interval_base - interval_len);
 constexpr tpPrime interval_end = interval_base;
 
